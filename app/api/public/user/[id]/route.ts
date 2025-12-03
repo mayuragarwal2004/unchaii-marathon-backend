@@ -9,12 +9,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             where: { id },
             select: {
                 id: true,
-                name: true,
+                firstName: true,
+                middleName: true,
+                lastName: true,
                 distance: true,
                 tshirtSize: true,
                 gender: true,
                 age: true,
                 gotra: true,
+                emergencyContactName: true,
+                emergencyContactPhone: true,
+                medicalConditions: true,
+                medications: true,
+                allergies: true,
             }
         });
 

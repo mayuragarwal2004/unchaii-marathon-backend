@@ -7,27 +7,44 @@ const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, gotra, gender, birthdate, age, tshirtSize, distance, phoneNumber } = body;
+        const {
+            firstName, middleName, lastName, email, phoneNumber, gender, gotra, birthdate, age, address,
+            emergencyContactName, emergencyContactRelation, emergencyContactPhone,
+            distance, tshirtSize,
+            medicalConditions, medications, allergies,
+            acceptedDeclaration
+        } = body;
 
         // Ensure unique ID (though collision probability is low for 6 chars, it's non-zero)
         let id = nanoid();
-        let exists = await prisma.user.findUnique({ where: { id } });
+        let exists = await prisma.user.findUnique({ where: { id }, select: { id: true } });
         while (exists) {
             id = nanoid();
-            exists = await prisma.user.findUnique({ where: { id } });
+            exists = await prisma.user.findUnique({ where: { id }, select: { id: true } });
         }
 
         const user = await prisma.user.create({
             data: {
                 id,
-                name,
-                gotra,
+                firstName,
+                middleName,
+                lastName,
+                email,
+                phoneNumber,
                 gender,
+                gotra,
                 birthdate: new Date(birthdate),
                 age: parseInt(age),
-                phoneNumber,
-                tshirtSize,
+                address,
+                emergencyContactName,
+                emergencyContactRelation,
+                emergencyContactPhone,
                 distance,
+                tshirtSize,
+                medicalConditions,
+                medications,
+                allergies,
+                acceptedDeclaration,
             },
         });
 

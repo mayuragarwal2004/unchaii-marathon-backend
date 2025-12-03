@@ -8,15 +8,31 @@ datasource db {
 }
 
 model User {
-  id            String   @id
-  name          String
-  gotra         String?
-  gender        String
-  birthdate     DateTime
-  age           Int
-  phoneNumber   String   @default("")
-  tshirtSize    String
-  distance      String
+  id          String   @id
+  firstName   String?
+  middleName  String?
+  lastName    String?
+  email       String?
+  gotra       String?
+  gender      String
+  birthdate   DateTime
+  age         Int
+  phoneNumber String   @default("")
+  address     String?
+
+  emergencyContactName     String?
+  emergencyContactRelation String?
+  emergencyContactPhone    String?
+
+  medicalConditions String?
+  medications       String?
+  allergies         String?
+
+  tshirtSize String
+  distance   String
+
+  acceptedDeclaration Boolean @default(false)
+
   isBibGiven    Boolean  @default(false)
   isTshirtGiven Boolean  @default(false)
   createdAt     DateTime @default(now())

@@ -43,6 +43,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     try {
         const body = await request.json();
+
+        // Remove id from body to prevent update errors
+        delete body.id;
+
         const user = await prisma.user.update({
             where: { id },
             data: body,
