@@ -7,7 +7,7 @@ const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, gotra, gender, birthdate, age, tshirtSize, distance } = body;
+        const { name, gotra, gender, birthdate, age, tshirtSize, distance, phoneNumber } = body;
 
         // Ensure unique ID (though collision probability is low for 6 chars, it's non-zero)
         let id = nanoid();
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
                 gender,
                 birthdate: new Date(birthdate),
                 age: parseInt(age),
+                phoneNumber,
                 tshirtSize,
                 distance,
             },
