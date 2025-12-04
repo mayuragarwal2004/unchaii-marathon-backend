@@ -8,12 +8,29 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const {
-            firstName, middleName, lastName, email, phoneNumber, gender, gotra, birthdate, age, address,
+            firstName, middleName, lastName, email, phoneNumber, gender, gotra, birthdate, age, address, bloodGroup,
             emergencyContactName, emergencyContactRelation, emergencyContactPhone,
             distance, tshirtSize,
             medicalConditions, medications, allergies,
             acceptedDeclaration
         } = body;
+
+        // Check for duplicate entry (same name + phone)
+        const duplicateUser = await prisma.user.findFirst({
+            where: {
+                firstName: { equals: firstName, mode: 'insensitive' },
+                lastName: { equals: lastName, mode: 'insensitive' },
+                phoneNumber: phoneNumber
+            },
+            select: { id: true }
+        });
+
+        if (duplicateUser) {
+            return NextResponse.json({
+                success: false,
+                error: 'A participant with this name and phone number is already registered.'
+            }, { status: 409 });
+        }
 
         // Ensure unique ID (though collision probability is low for 6 chars, it's non-zero)
         let id = nanoid();
@@ -36,6 +53,7 @@ export async function POST(request: Request) {
                 birthdate: new Date(birthdate),
                 age: parseInt(age),
                 address,
+                bloodGroup,
                 emergencyContactName,
                 emergencyContactRelation,
                 emergencyContactPhone,
