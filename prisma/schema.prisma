@@ -40,6 +40,14 @@ model User {
   updatedAt     DateTime @updatedAt
 }
 
+model Otp {
+  id          String   @id @default(cuid())
+  phoneNumber String   @unique
+  code        String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+}
+
 model Admin {
   id       String @id @default(uuid())
   username String @unique
