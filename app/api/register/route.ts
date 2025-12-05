@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const {
-            firstName, middleName, lastName, email, phoneNumber, gender, gotra, birthdate, age, address, bloodGroup,
+            firstName, middleName, lastName, email, phoneNumber, gender, gotra, birthdate, age, bloodGroup,
             emergencyContactName, emergencyContactRelation, emergencyContactPhone,
             distance, tshirtSize,
             medicalConditions, medications, allergies,
@@ -52,7 +52,6 @@ export async function POST(request: Request) {
                 gotra,
                 birthdate: new Date(birthdate),
                 age: parseInt(age),
-                address,
                 bloodGroup,
                 emergencyContactName,
                 emergencyContactRelation,

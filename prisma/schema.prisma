@@ -18,7 +18,6 @@ model User {
   birthdate   DateTime
   age         Int
   phoneNumber String   @default("")
-  address     String?
   bloodGroup  String?
 
   emergencyContactName     String?
