@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sign } from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export async function POST(request: Request) {
     try {
@@ -30,7 +33,10 @@ export async function POST(request: Request) {
         // Optionally delete the OTP record after successful verification to prevent reuse
         await prisma.otp.delete({ where: { phoneNumber } });
 
-        return NextResponse.json({ success: true, message: 'OTP verified successfully' });
+        // Generate JWT
+        const token = sign({ phoneNumber }, JWT_SECRET, { expiresIn: '7d' });
+
+        return NextResponse.json({ success: true, message: 'OTP verified successfully', token });
 
     } catch (error) {
         console.error('Verify OTP error:', error);

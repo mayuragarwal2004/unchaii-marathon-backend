@@ -8,8 +8,22 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { phoneNumber } = body;
 
+
         if (!phoneNumber) {
             return NextResponse.json({ success: false, error: 'Phone number is required' }, { status: 400 });
+        }
+
+        // Check if user exists
+        const user = await prisma.user.findFirst({
+            where: { phoneNumber }
+        });
+
+        if (!user) {
+            return NextResponse.json({
+                success: false,
+                error: 'This number is not registered. Please register first.',
+                code: 'USER_NOT_FOUND'
+            }, { status: 404 });
         }
 
         // Generate 6-digit OTP
