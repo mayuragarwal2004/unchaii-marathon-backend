@@ -11,19 +11,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: 'Phone number is required' }, { status: 400 });
         }
 
-        // Check if user exists - BLOCK if exists
-        const user = await prisma.user.findFirst({
-            where: { phoneNumber }
-        });
-
-        if (user) {
-            return NextResponse.json({
-                success: false,
-                error: 'User already registered. Please login.',
-                code: 'USER_ALREADY_EXISTS'
-            }, { status: 400 });
-        }
-
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
