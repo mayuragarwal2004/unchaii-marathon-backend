@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { customAlphabet } from 'nanoid';
+import { sendWhatsAppMessageByDovesoft } from '@/lib/whatsapp';
 
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 6);
 
@@ -63,6 +64,15 @@ export async function POST(request: Request) {
                 allergies,
                 acceptedDeclaration,
             },
+        });
+
+        // Send WhatsApp Notification (Non-blocking)
+        sendWhatsAppMessageByDovesoft('register_success', phoneNumber, {
+            name: firstName,
+            distance: distance,
+            userId: user.id
+        }).catch(err => {
+            console.error('Failed to send WhatsApp registration success:', err);
         });
 
         return NextResponse.json({ success: true, user });
