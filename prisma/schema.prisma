@@ -8,16 +8,16 @@ datasource db {
 }
 
 model User {
-  id          String   @id
+  id          String    @id
   firstName   String?
   middleName  String?
   lastName    String?
   email       String?
   gotra       String?
-  gender      String
-  birthdate   DateTime
-  age         Int
-  phoneNumber String   @default("")
+  gender      String?
+  birthdate   DateTime?
+  age         Int?
+  phoneNumber String    @default("")
   bloodGroup  String?
 
   emergencyContactName     String?
