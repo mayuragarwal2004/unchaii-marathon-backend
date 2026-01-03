@@ -31,41 +31,72 @@ export async function GET(request: Request) {
         const isBibGiven = searchParams.get('isBibGiven');
         const isTshirtGiven = searchParams.get('isTshirtGiven');
 
-        // 3. Build Where Query
-        const where: Prisma.UserWhereInput = {};
+        // 3. Build Search Conditions for SQL
+        const conditions: Prisma.Sql[] = [Prisma.sql`TRUE`];
 
         if (search) {
-            where.OR = [
-                { firstName: { contains: search, mode: 'insensitive' } },
-                { middleName: { contains: search, mode: 'insensitive' } },
-                { lastName: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } },
-                { phoneNumber: { contains: search, mode: 'insensitive' } },
-                { id: { contains: search, mode: 'insensitive' } },
-            ];
+            const tokens = search.trim().split(/\s+/);
+            tokens.forEach(token => {
+                const pattern = `%${token}%`;
+                conditions.push(Prisma.sql`(
+                    "bibNum" ILIKE ${pattern} OR 
+                    "firstName" ILIKE ${pattern} OR 
+                    "middleName" ILIKE ${pattern} OR 
+                    "lastName" ILIKE ${pattern} OR 
+                    "email" ILIKE ${pattern} OR 
+                    "phoneNumber" ILIKE ${pattern} OR 
+                    "id" ILIKE ${pattern}
+                )`);
+            });
         }
 
-        if (distance && distance !== 'all') where.distance = distance;
-        if (tshirtSize && tshirtSize !== 'all') where.tshirtSize = tshirtSize;
-
+        if (distance && distance !== 'all') {
+            conditions.push(Prisma.sql`"distance" = ${distance}`);
+        }
+        if (tshirtSize && tshirtSize !== 'all') {
+            conditions.push(Prisma.sql`"tshirtSize" = ${tshirtSize}`);
+        }
         if (isBibGiven !== null && isBibGiven !== '') {
-            where.isBibGiven = isBibGiven === 'true';
+            conditions.push(Prisma.sql`"isBibGiven" = ${isBibGiven === 'true'}`);
         }
-
         if (isTshirtGiven !== null && isTshirtGiven !== '') {
-            where.isTshirtGiven = isTshirtGiven === 'true';
+            conditions.push(Prisma.sql`"isTshirtGiven" = ${isTshirtGiven === 'true'}`);
         }
 
-        // 4. Execute Queries
-        const [users, total] = await Promise.all([
-            prisma.user.findMany({
-                where,
-                orderBy: { createdAt: 'desc' },
-                skip: isExport ? undefined : skip,
-                take: isExport ? undefined : limit,
-            }),
-            prisma.user.count({ where }),
+        const whereSql = Prisma.join(conditions, ' AND ');
+
+        // 4. Build Ordering and Relevance
+        const relevanceSql = search ? Prisma.sql`, 
+            CASE 
+                WHEN "bibNum" = ${search} THEN 1
+                WHEN "bibNum" ILIKE ${search + '%'} THEN 2
+                WHEN "firstName" ILIKE ${search + '%'} OR "lastName" ILIKE ${search + '%'} THEN 3
+                ELSE 4
+            END AS relevance` : Prisma.empty;
+
+        const orderBySql = search ? Prisma.sql`relevance ASC, "createdAt" DESC` : Prisma.sql`"createdAt" DESC`;
+
+        // 5. Build Final Queries
+        const usersQuery = Prisma.sql`
+            SELECT * ${relevanceSql}
+            FROM "User"
+            WHERE ${whereSql}
+            ORDER BY ${orderBySql}
+            ${isExport ? Prisma.empty : Prisma.sql`LIMIT ${limit} OFFSET ${skip}`}
+        `;
+
+        const countQuery = Prisma.sql`
+            SELECT COUNT(*)::int as count
+            FROM "User"
+            WHERE ${whereSql}
+        `;
+
+        const [users, countResult] = await Promise.all([
+            prisma.$queryRaw<(Prisma.UserGetPayload<object> & { relevance?: number })[]>(usersQuery),
+            prisma.$queryRaw<{ count: number }[]>(countQuery),
         ]);
+
+        const total = countResult[0]?.count || 0;
 
         return NextResponse.json({
             success: true,
