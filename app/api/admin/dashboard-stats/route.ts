@@ -69,6 +69,52 @@ export async function GET() {
             }
         })
 
+        // 7. Counter Distribution
+        const counterTotals = await prisma.user.groupBy({
+            by: ['counterNo'],
+            _count: { _all: true }
+        });
+
+        const bibsByCounter = await prisma.user.groupBy({
+            by: ['counterNo'],
+            where: { isBibGiven: true },
+            _count: { _all: true }
+        });
+
+        const tshirtsByCounter = await prisma.user.groupBy({
+            by: ['counterNo'],
+            where: { isTshirtGiven: true },
+            _count: { _all: true }
+        });
+
+        // Merge counter stats
+        const countersMap = new Map<string, { counterNo: string, total: number, bibs: number, tshirts: number }>();
+
+        counterTotals.forEach(c => {
+            if (c.counterNo) {
+                countersMap.set(c.counterNo, {
+                    counterNo: c.counterNo,
+                    total: c._count._all,
+                    bibs: 0,
+                    tshirts: 0
+                });
+            }
+        });
+
+        bibsByCounter.forEach(c => {
+            if (c.counterNo && countersMap.has(c.counterNo)) {
+                countersMap.get(c.counterNo)!.bibs = c._count._all;
+            }
+        });
+
+        tshirtsByCounter.forEach(c => {
+            if (c.counterNo && countersMap.has(c.counterNo)) {
+                countersMap.get(c.counterNo)!.tshirts = c._count._all;
+            }
+        });
+
+        const countersData = Array.from(countersMap.values()).sort((a, b) => a.counterNo.localeCompare(b.counterNo));
+
         return NextResponse.json({
             success: true,
             stats: {
@@ -79,6 +125,7 @@ export async function GET() {
                 distance: distanceData.map(d => ({ name: d.distance, value: d._count.distance })),
                 tshirt: tshirtData.map(t => ({ name: t.tshirtSize, value: t._count.tshirtSize })),
                 gender: genderData.map(g => ({ name: g.gender, value: g._count.gender })),
+                counters: countersData,
             },
         });
     } catch (error) {
