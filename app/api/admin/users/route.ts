@@ -64,24 +64,22 @@ export async function GET(request: Request) {
         }
 
         const whereSql = Prisma.join(conditions, ' AND ');
+        const isFullData = searchParams.get('data') === 'all' || isExport;
 
         // 4. Build Ordering and Relevance
-        const relevanceSql = search ? Prisma.sql`, 
-            CASE 
-                WHEN "bibNum" = ${search} THEN 1
-                WHEN "bibNum" ILIKE ${search + '%'} THEN 2
-                WHEN "firstName" ILIKE ${search + '%'} OR "lastName" ILIKE ${search + '%'} THEN 3
-                ELSE 4
-            END AS relevance` : Prisma.empty;
-
-        const orderBySql = search ? Prisma.sql`relevance ASC, "createdAt" DESC` : Prisma.sql`"createdAt" DESC`;
-
-        // 5. Build Final Queries
         const usersQuery = Prisma.sql`
-            SELECT * ${relevanceSql}
+            SELECT 
+                ${isFullData ? Prisma.sql`*` : Prisma.sql`id, "firstName", "middleName", "lastName", "phoneNumber", "isBibGiven", "isTshirtGiven", distance, "tshirtSize", "bibNum"`},
+                CASE 
+                    WHEN "bibNum" = ${search} THEN 5
+                    WHEN "bibNum" LIKE ${search + '%'} THEN 4
+                    WHEN "firstName" ILIKE ${search + '%'} THEN 3
+                    WHEN "lastName" ILIKE ${search + '%'} THEN 2
+                    ELSE 1
+                END as relevance
             FROM "User"
             WHERE ${whereSql}
-            ORDER BY ${orderBySql}
+            ORDER BY relevance DESC, "createdAt" DESC
             ${isExport ? Prisma.empty : Prisma.sql`LIMIT ${limit} OFFSET ${skip}`}
         `;
 
@@ -92,7 +90,7 @@ export async function GET(request: Request) {
         `;
 
         const [users, countResult] = await Promise.all([
-            prisma.$queryRaw<(Prisma.UserGetPayload<object> & { relevance?: number })[]>(usersQuery),
+            prisma.$queryRaw<Prisma.UserGetPayload<object>[]>(usersQuery),
             prisma.$queryRaw<{ count: number }[]>(countQuery),
         ]);
 
