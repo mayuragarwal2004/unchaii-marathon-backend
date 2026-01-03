@@ -31,6 +31,10 @@ model User {
   tshirtSize String
   distance   String
 
+  passLink  String? @db.Text
+  bibNum    String? @db.Text
+  counterNo String? @db.Text
+
   acceptedDeclaration Boolean @default(false)
 
   isBibGiven    Boolean   @default(false)
